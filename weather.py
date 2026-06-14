@@ -46,4 +46,23 @@ def get_aqi_health(aqi):
             return "Unknown"
 
 def display_weather(record):
-    pass
+    if record["status"] == "Not Found":
+        print(f"Weather data for {record['city']} Not Found.")
+    else:
+        weather = record["weather"]
+        aqi = record["aqi"]
+        city = weather["city"]
+        temperature = weather["temperature"]
+        humidity = weather["humidity"]
+        wind_speed = weather["wind_speed"]
+        condition = weather["condition"]
+        aqi_value = aqi["aqi"]
+        category = aqi["category"]
+        advisory = aqi["advisory"]
+        print(f"\n Weather in {city}")
+        print(f"Temperature: {temperature}°C")
+        print(f"Humidity: {humidity}%")
+        print(f"Wind Speed: {wind_speed} m/s")
+        print(f"Condition: {condition}")
+        print(f"Air Quality Index: {aqi_value} - {category}")
+        print(f"Advisory: {advisory} \n")
