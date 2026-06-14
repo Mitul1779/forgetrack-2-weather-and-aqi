@@ -3,11 +3,11 @@
 A Python command-line project that fetches real-time weather and air quality data using the OpenWeather API. It also stores search history locally and displays formatted results in the terminal.
 
 # Features
--Fetch current weather data for any city
--Display temperature, humidity, wind speed, and weather condition
--Fetch Air Quality Index (AQI) with category and advisory
--Store last 5 searches in a local JSON file
--Load and display previous search history
+-Fetch current weather data for any city  
+-Display temperature, humidity, wind speed, and weather condition  
+-Fetch Air Quality Index (AQI) with category and advisory  
+-Store last 5 searches in a local JSON file  
+-Load and display previous search history  
 
 # Setup Instructions
 1. Clone the repository
@@ -29,9 +29,9 @@ OPENWEATHER_API_KEY=your_actual_api_key_here
 >> python main.py
 
 # How it works
-i. User enters a city name
-ii. Weather data is fetched from OpenWeather API
-iii. Coordinates are used to fetch AQI data
-iv. Combined result is displayed in the terminal
-v. Search is saved in history (maximum 5 entries)
-vi. Previous searches can be viewed using the history command
+i. User enters a city name  
+ii. Weather data is fetched from OpenWeather API  
+iii. Coordinates are used to fetch AQI data  
+iv. Combined result is displayed in the terminal  
+v. Search is saved in history (maximum 5 entries)  
+vi. Previous searches can be viewed using the history command  
