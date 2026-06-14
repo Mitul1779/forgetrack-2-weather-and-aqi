@@ -1,5 +1,6 @@
 import os
 import json
+import requests
 
 def load_history():
     if os.path.exists("history.json"):
@@ -25,10 +26,72 @@ def show_last_saved(history):
         display_weather(history[-1])
 
 def get_weather(city):
-    pass
+
+    url = f"http://api.openweathermap.org/data/2.5/weather"
+    parameters = {
+        "q": city,
+        "appid": "YOUR_API_KEY",
+        "units": "metric"
+    }
+    response = requests.get(url, params=parameters)
+
+    if response.status_code == 200:
+        data = response.json()
+
+        return {
+            "status": "success",
+            "weather": {
+                "city": data["name"],
+                "temperature": data["main"]["temp"],
+                "humidity": data["main"]["humidity"],
+                "wind_speed": data["wind"]["speed"],
+                "condition": data["weather"][0]["description"],
+                "lat": data["coord"]["lat"],
+                "lon": data["coord"]["lon"]
+            }
+        }
+
+    else:
+        return {
+            "status": "Not Found",
+            "city": city
+        }
 
 def get_aqi(lat, lon):
-    pass
+
+    url = "http://api.openweathermap.org/data/2.5/air_pollution"
+
+    params = {
+        "lat": lat,
+        "lon": lon,
+        "appid": "YOUR_API_KEY"
+    }
+
+    response = requests.get(url, params=params)
+
+    if response.status_code == 200:
+
+        data = response.json()
+
+        aqi_value = data["list"][0]["main"]["aqi"]
+
+
+        return {
+            "aqi": {
+                "aqi": aqi_value,
+                "category": get_aqi_health(aqi_value),
+                "advisory": get_aqi_advisory(aqi_value)
+            }
+        }
+
+    else:
+        return {
+            "aqi": {
+                "aqi": None,
+                "category": "Unknown",
+                "advisory": "AQI data unavailable"
+            }
+        }
 
 def get_aqi_health(aqi):
     match aqi:
@@ -44,6 +107,21 @@ def get_aqi_health(aqi):
             return "Very Poor"
         case _:
             return "Unknown"
+        
+def get_aqi_advisory(aqi):
+    match aqi:
+        case 1:
+            return "Air quality is good. Enjoy outdoor activities."
+        case 2:
+            return "Acceptable air quality. Sensitive individuals may want to consider limiting prolonged outdoor exertion."
+        case 3:
+            return "Sensitive individuals should reduce outdoor activity."
+        case 4:
+            return "Avoid outdoor exertion if possible."
+        case 5:
+            return "Health warning: stay indoors recommended."
+        case _:
+            return "AQI data unavailable"
 
 def display_weather(record):
     if record["status"] == "Not Found":
@@ -66,3 +144,51 @@ def display_weather(record):
         print(f"Condition: {condition}")
         print(f"Air Quality Index: {aqi_value} - {category}")
         print(f"Advisory: {advisory} \n")
+
+def get_weather_with_aqi(city):
+
+    weather_result = get_weather(city)
+
+    if weather_result["status"] != "success":
+        return weather_result
+
+    lat = weather_result["weather"]["lat"]
+    lon = weather_result["weather"]["lon"]
+
+    aqi_result = get_aqi(lat, lon)
+
+    return {
+        "status": "success",
+        "weather": weather_result["weather"],
+        "aqi": aqi_result["aqi"]
+    }
+
+def main():
+
+    history = load_history()
+    show_last_saved(history)
+
+    print("\nEnter a city name to view its weather and AQI, 'history' to view search history, or 'exit' to quit\n")
+    while True:
+
+        city = input("City: ").strip()
+
+        if city.lower() == "exit":
+            print("Goodbye!")
+            break
+
+        elif city.lower() == "history":
+            show_history(history)
+
+        else:
+            result = get_weather_with_aqi(city)
+            display_weather(result)
+
+            if result["status"] == "success":
+                history.append(result)
+                save_history(history)
+
+
+
+
+main()
