@@ -1,6 +1,10 @@
 import os
+from dotenv import load_dotenv
 import json
 import requests
+
+load_dotenv()
+API_KEY = os.getenv("OPENWEATHER_API_KEY")
 
 def load_history():
     if os.path.exists("history.json"):
@@ -27,15 +31,18 @@ def show_last_saved(history):
 
 def get_weather(city):
 
-    url = f"http://api.openweathermap.org/data/2.5/weather"
+    url = "http://api.openweathermap.org/data/2.5/weather"
+
     parameters = {
         "q": city,
-        "appid": "YOUR_API_KEY",
+        "appid": API_KEY,
         "units": "metric"
     }
-    response = requests.get(url, params=parameters)
 
-    if response.status_code == 200:
+    try:
+        response = requests.get(url, params=parameters, timeout=5)
+        response.raise_for_status()
+
         data = response.json()
 
         return {
@@ -51,10 +58,22 @@ def get_weather(city):
             }
         }
 
-    else:
+    except requests.exceptions.Timeout:
         return {
-            "status": "Not Found",
-            "city": city
+            "status": "error",
+            "message": "Request timed out"
+        }
+
+    except requests.exceptions.ConnectionError:
+        return {
+            "status": "error",
+            "message": "No internet connection"
+        }
+
+    except requests.exceptions.RequestException:
+        return {
+            "status": "error",
+            "message": "Weather service unavailable"
         }
 
 def get_aqi(lat, lon):
@@ -64,10 +83,36 @@ def get_aqi(lat, lon):
     params = {
         "lat": lat,
         "lon": lon,
-        "appid": "YOUR_API_KEY"
+        "appid": API_KEY
     }
 
-    response = requests.get(url, params=params)
+    try:
+        response = requests.get(url, params=params, timeout=5)
+        response.raise_for_status()
+    except requests.exceptions.Timeout:
+        return {
+            "aqi": {
+                "aqi": None,
+                "category": "Unknown",
+                "advisory": "AQI data unavailable"
+            }
+        }
+    except requests.exceptions.ConnectionError:
+        return {
+            "aqi": {
+                "aqi": None,
+                "category": "Unknown",
+                "advisory": "AQI data unavailable"
+            }
+        }
+    except requests.exceptions.RequestException:
+        return {
+            "aqi": {
+                "aqi": None,
+                "category": "Unknown",
+                "advisory": "AQI data unavailable"
+            }
+        }
 
     if response.status_code == 200:
 
@@ -124,8 +169,8 @@ def get_aqi_advisory(aqi):
             return "AQI data unavailable"
 
 def display_weather(record):
-    if record["status"] == "Not Found":
-        print(f"Weather data for {record['city']} Not Found.")
+    if record["status"] == "not found":
+        print(f"Weather data for {record['city']} not found.")
     else:
         weather = record["weather"]
         aqi = record["aqi"]
@@ -174,7 +219,7 @@ def main():
         city = input("City: ").strip()
 
         if city.lower() == "exit":
-            print("Goodbye!")
+            print("program ending...")
             break
 
         elif city.lower() == "history":
@@ -182,11 +227,15 @@ def main():
 
         else:
             result = get_weather_with_aqi(city)
-            display_weather(result)
 
-            if result["status"] == "success":
+            if result["status"] == "success":   
+                display_weather(result)
                 history.append(result)
+                history = history[-5:]
                 save_history(history)
+
+            else:
+                print(f"\nError: {result.get('message', 'Something went wrong')}\n")
 
 
 
